@@ -24,3 +24,8 @@ TestResults.xml
 **/.DS_Store
 /.idea/
 web-client/frontend/node_modules
+
+# Python compiled cache
+**/__pycache__/
+*.py[cod]
+*$py.class
