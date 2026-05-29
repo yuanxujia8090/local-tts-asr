@@ -16,8 +16,9 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Suppress noisy third-party logs
-logging.getLogger("transformers").setLevel(logging.WARNING)
+logging.getLogger("transformers").setLevel(logging.ERROR)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
+logging.getLogger("huggingface_hub").setLevel(logging.WARNING)
 
 app = FastAPI(
     title="Qwen3 Voice Service",

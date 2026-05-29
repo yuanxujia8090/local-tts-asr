@@ -10,5 +10,10 @@ if __name__ == "__main__":
         host=settings.host,
         port=settings.port,
         reload=True,
-        reload_excludes=[".venv", "__pycache__"],
+        # Exclude virtual env and cache from file watching
+        reload_excludes=[
+            "*.pyc",
+            "__pycache__",
+            ".venv/**",
+        ],
     )
