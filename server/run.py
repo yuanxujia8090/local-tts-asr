@@ -12,8 +12,9 @@ if __name__ == "__main__":
         reload=True,
         # Exclude virtual env and cache from file watching
         reload_excludes=[
-            "*.pyc",
-            "__pycache__",
-            ".venv/**",
+            ".venv",
+            "*__pycache__*",
+            "*.pyc*",
         ],
+        log_level="info",
     )
