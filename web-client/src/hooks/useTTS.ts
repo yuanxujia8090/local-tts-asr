@@ -22,12 +22,35 @@ export interface CustomVoice {
 }
 
 export function useTTS() {
-  const synthesize = async (req: TTSRequest): Promise<Blob> => {
-    const resp = await fetch('/v1/audio/speech', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(req),
-    })
+  const synthesize = async (req: TTSRequest, refAudioFile?: File): Promise<Blob> => {
+    let resp: Response
+
+    if (req.mode === 'voice_clone' && refAudioFile) {
+      // voice_clone needs file upload — use multipart/form-data
+      const formData = new FormData()
+      formData.append('input', req.input)
+      if (req.voice) formData.append('voice', req.voice)
+      if (req.emotion) formData.append('emotion', req.emotion)
+      if (req.language) formData.append('language', req.language)
+      if (req.response_format) formData.append('response_format', req.response_format)
+      if (req.mode) formData.append('mode', req.mode)
+      if (refAudioFile) formData.append('ref_audio_file', refAudioFile)
+      if (req.ref_text) formData.append('ref_text', req.ref_text)
+      if (req.instruct) formData.append('instruct', req.instruct)
+      if (req.temperature != null) formData.append('temperature', String(req.temperature))
+      if (req.top_p != null) formData.append('top_p', String(req.top_p))
+      if (req.max_new_tokens != null) formData.append('max_new_tokens', String(req.max_new_tokens))
+
+      resp = await fetch('/v1/audio/speech', { method: 'POST', body: formData })
+    } else {
+      // Other modes — use JSON
+      resp = await fetch('/v1/audio/speech', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(req),
+      })
+    }
+
     if (!resp.ok) {
       const error = await resp.text()
       throw new Error(`TTS API error: ${error}`)
