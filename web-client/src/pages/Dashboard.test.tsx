@@ -63,17 +63,17 @@ describe('Dashboard', () => {
     const asrButton = buttons[1]
     const settingsButton = buttons[2]
 
-    expect(ttsButton).toHaveClass('text-cyan-400')
-    expect(asrButton).toHaveClass('text-gray-400')
-    expect(settingsButton).toHaveClass('text-gray-400')
+    expect(ttsButton).toHaveClass('text-cyan-600')
+    expect(asrButton).toHaveClass('text-gray-500')
+    expect(settingsButton).toHaveClass('text-gray-500')
 
     fireEvent.click(asrButton)
-    expect(asrButton).toHaveClass('text-cyan-400')
-    expect(ttsButton).toHaveClass('text-gray-400')
+    expect(asrButton).toHaveClass('text-cyan-600')
+    expect(ttsButton).toHaveClass('text-gray-500')
 
     fireEvent.click(settingsButton)
-    expect(settingsButton).toHaveClass('text-cyan-400')
-    expect(asrButton).toHaveClass('text-gray-400')
+    expect(settingsButton).toHaveClass('text-cyan-600')
+    expect(asrButton).toHaveClass('text-gray-500')
   })
 
   it('shows page header', () => {

@@ -404,7 +404,7 @@ describe('ASRPanel', () => {
 
     const textEl = screen.getByText('test result')
     const pEl = textEl.closest('p')
-    expect(pEl).toHaveClass('bg-gray-900')
+    expect(pEl).toHaveClass('bg-gray-50')
   })
 
   it('multiple word timestamps render in order', async () => {

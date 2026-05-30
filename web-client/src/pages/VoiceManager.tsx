@@ -82,17 +82,17 @@ function VoiceManager() {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-semibold text-cyan-300">自定义音色管理</h2>
+      <h2 className="text-xl font-semibold text-cyan-600">自定义音色管理</h2>
 
       {voices.length === 0 ? (
-        <div className="text-gray-500 text-center py-8">
+        <div className="text-gray-400 text-center py-8">
           暂无自定义音色。在 TTS 合成页面上传参考音频后保存。
         </div>
       ) : (
         <div className="space-y-3">
           {voices.map(voice => (
             <div key={voice.id}
-                 className="bg-gray-900 rounded-lg p-4 flex items-center gap-4">
+                 className="bg-white border border-gray-200 rounded-lg p-4 flex items-center gap-4">
               {/* Play button */}
               <button onClick={() => handlePlay(voice)}
                       className="w-10 h-10 rounded-full bg-cyan-600 hover:bg-cyan-500 flex items-center justify-center shrink-0"
@@ -119,8 +119,8 @@ function VoiceManager() {
       )}
 
       {/* Usage hint */}
-      <div className="bg-gray-800/50 rounded-lg p-4 text-sm text-gray-400">
-        <p className="text-cyan-300 font-medium mb-1">💡 使用提示</p>
+      <div className="bg-gray-50 rounded-lg p-4 text-sm text-gray-600">
+        <p className="text-cyan-600 font-medium mb-1">💡 使用提示</p>
         <ul className="list-disc list-inside space-y-1 text-xs">
           <li>在 TTS 合成页面的「内置音色」模式下，下拉列表会包含你保存的自定义音色</li>
           <li>上传参考音频后，点击「💾 保存为自定义音色」按钮即可保存</li>

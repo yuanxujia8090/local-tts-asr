@@ -179,7 +179,7 @@ function TTSPanel() {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-semibold text-cyan-300">TTS 合成测试</h2>
+      <h2 className="text-xl font-semibold text-cyan-600">TTS 合成测试</h2>
 
       {/* Text Input */}
       <div>
@@ -187,7 +187,7 @@ function TTSPanel() {
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
-          className="w-full bg-gray-900 border border-gray-700 rounded p-3 text-white resize-none"
+          className="w-full bg-white border border-gray-300 rounded p-3 text-gray-800 resize-none"
           rows={4}
           placeholder="输入要合成的文本..."
         />
@@ -204,7 +204,7 @@ function TTSPanel() {
               className={`px-4 py-2 rounded font-medium text-sm transition-colors ${
                 mode === m.value
                   ? 'bg-cyan-600 text-white'
-                  : 'bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700'
+                  : 'bg-gray-100 text-gray-500 hover:text-gray-800 hover:bg-gray-200'
               }`}
             >
               {m.label}
@@ -217,36 +217,33 @@ function TTSPanel() {
       {mode === 'custom_voice' && (
         <div className="grid grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm text-gray-400 mb-1">音色</label>
+            <label className="block text-sm text-gray-500 mb-1">音色</label>
             <select value={savedVoiceId || voice}
                     onChange={(e) => { setSavedVoiceId(''); setVoice(e.target.value); }}
-                    className="w-full bg-gray-900 border border-gray-700 rounded p-2 text-white">
+                    className="w-full bg-white border border-gray-300 rounded p-2 text-gray-800">
               {allVoices.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
             </select>
           </div>
-
-
-
           <div>
-            <label className="block text-sm text-gray-400 mb-1">语言</label>
+            <label className="block text-sm text-gray-500 mb-1">语言</label>
             <select value={language} onChange={(e) => setLanguage(e.target.value)}
-                    className="w-full bg-gray-900 border border-gray-700 rounded p-2 text-white">
+                    className="w-full bg-white border border-gray-300 rounded p-2 text-gray-800">
               <option>Auto</option><option>Chinese</option><option>English</option>
               <option>Japanese</option><option>Korean</option>
             </select>
           </div>
-        </div>
-      )}
-
-      {/* Emotion - only for built-in speakers */}
-      {mode === 'custom_voice' && allVoices.some(v => v.id === voice) && SPEAKERS.includes(voice) && (
-        <div>
-          <label className="block text-sm text-gray-400 mb-1">情绪</label>
-          <select value={emotion} onChange={(e) => setEmotion(e.target.value)}
-                  className="w-full bg-gray-900 border border-gray-700 rounded p-2 text-white">
-            <option value="">默认</option>
-            {EMOTIONS.map(e => <option key={e} value={e}>{e}</option>)}
-          </select>
+          <div>
+            <label className="block text-sm text-gray-500 mb-1">情绪</label>
+            <select value={emotion}
+                    onChange={(e) => {
+                      setEmotion(e.target.value)
+                      // Reset savedVoiceId when emotion changes to avoid confusion
+                    }}
+                    className="w-full bg-white border border-gray-300 rounded p-2 text-gray-800">
+              <option value="">默认</option>
+              {EMOTIONS.map(e => <option key={e} value={e}>{e}</option>)}
+            </select>
+          </div>
         </div>
       )}
 
@@ -257,7 +254,7 @@ function TTSPanel() {
             value={emotion}
             onChange={(e) => setEmotion(e.target.value)}
             rows={6}
-            className="w-full bg-gray-900 border border-gray-700 rounded p-2 text-white resize-y"
+            className="w-full bg-white border border-gray-300 rounded p-2 text-gray-800 resize-y"
             placeholder="例如：温柔的女声，音调偏高，带一点笑意" />
         </div>
       )}
@@ -276,7 +273,7 @@ function TTSPanel() {
       {/* Advanced Parameters Toggle */}
       <div>
         <button onClick={() => setShowAdvanced(!showAdvanced)}
-                className="text-sm text-gray-400 hover:text-cyan-300 flex items-center gap-1">
+                className="text-sm text-gray-400 hover:text-cyan-600 flex items-center gap-1">
           {showAdvanced ? '▾' : '▸'} 高级参数
         </button>
 
@@ -297,9 +294,9 @@ function TTSPanel() {
               </label>
               <input type="range" min={0.1} max={2.0} step={0.05} value={temperature}
                      onChange={(e) => setTemperature(parseFloat(e.target.value))}
-                     className="w-full accent-cyan-500" />
+                     className="w-full accent-cyan-600" />
               {tooltipKey === 'temperature' && (
-                <div className="mt-2 p-3 bg-gray-900 border border-gray-700 rounded text-xs text-gray-300 space-y-1">
+                <div className="mt-2 p-3 bg-gray-50 border border-gray-300 rounded text-xs text-gray-700 space-y-1">
                   <p className="font-medium text-cyan-400">{PARAM_TOOLTIPS.temperature.title}</p>
                   <p>{PARAM_TOOLTIPS.temperature.desc}</p>
                   <pre className="whitespace-pre-wrap text-gray-400">影响：{PARAM_TOOLTIPS.temperature.effect}</pre>
@@ -321,9 +318,9 @@ function TTSPanel() {
               </label>
               <input type="range" min={0.1} max={1.0} step={0.05} value={topP}
                      onChange={(e) => setTopP(parseFloat(e.target.value))}
-                     className="w-full accent-cyan-500" />
+                     className="w-full accent-cyan-600" />
               {tooltipKey === 'top_p' && (
-                <div className="mt-2 p-3 bg-gray-900 border border-gray-700 rounded text-xs text-gray-300 space-y-1">
+                <div className="mt-2 p-3 bg-gray-50 border border-gray-300 rounded text-xs text-gray-700 space-y-1">
                   <p className="font-medium text-cyan-400">{PARAM_TOOLTIPS.top_p.title}</p>
                   <p>{PARAM_TOOLTIPS.top_p.desc}</p>
                   <pre className="whitespace-pre-wrap text-gray-400">影响：{PARAM_TOOLTIPS.top_p.effect}</pre>
@@ -369,7 +366,7 @@ function TTSPanel() {
             <input type="text" value={saveVoiceName}
                    onChange={(e) => setSaveVoiceName(e.target.value)}
                    placeholder="输入音色名称"
-                   className="w-full bg-gray-900 border border-gray-700 rounded p-2 text-white mb-4"
+                   className="w-full bg-white border border-gray-300 rounded p-2 text-gray-800 mb-4"
                    onKeyDown={(e) => e.key === 'Enter' && handleSaveCustomVoice()} />
             <div className="flex gap-3 justify-end">
               <button onClick={() => setShowSaveDialog(false)}

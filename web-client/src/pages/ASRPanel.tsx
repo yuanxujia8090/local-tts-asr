@@ -76,7 +76,7 @@ function ASRPanel() {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-semibold text-cyan-300">ASR 转录测试</h2>
+      <h2 className="text-xl font-semibold text-cyan-600">ASR 转录测试</h2>
 
       {/* File Upload */}
       <div>
@@ -133,17 +133,17 @@ function ASRPanel() {
                 </button>
               </div>
             </div>
-            <p className="text-white bg-gray-900 p-3 rounded mt-1">{result.text}</p>
+            <p className="text-gray-800 bg-gray-50 border border-gray-200 p-3 rounded mt-1">{result.text}</p>
           </div>
 
           {result.words && result.words.length > 0 && (
             <div>
               <h3 className="text-sm text-gray-400">字词级时间戳</h3>
-              <div className="bg-gray-900 rounded p-3 mt-1 max-h-64 overflow-y-auto">
+              <div className="bg-gray-50 rounded p-3 mt-1 max-h-64 overflow-y-auto">
                 {result.words.map((w, i) => (
                   <div key={i} className="flex gap-4 text-sm py-1 border-b border-gray-700">
-                    <span className="text-cyan-400 font-mono">{w.start.toFixed(2)}s</span>
-                    <span className="text-cyan-400 font-mono">{w.end.toFixed(2)}s</span>
+                    <span className="text-cyan-600 font-mono">{w.start.toFixed(2)}s</span>
+                    <span className="text-cyan-600 font-mono">{w.end.toFixed(2)}s</span>
                     <span className="text-white flex-1">{w.word}</span>
                   </div>
                 ))}

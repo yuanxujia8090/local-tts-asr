@@ -239,7 +239,7 @@ describe('SettingsPanel', () => {
     })
 
     const container = screen.getByText('当前后端模式：').parentElement
-    expect(container).toHaveClass('bg-gray-900')
+    expect(container).toHaveClass('bg-gray-50')
   })
 
   it('updates backend mode when health check returns different value', async () => {
@@ -315,6 +315,6 @@ describe('SettingsPanel', () => {
     render(<SettingsPanel />)
 
     const notice = screen.getByText('注意：ENGINE_MODE 切换需要重启后端服务。')
-    expect(notice.parentElement).toHaveClass('bg-gray-900')
+    expect(notice.parentElement).toHaveClass('bg-gray-50')
   })
 })
