@@ -13,6 +13,19 @@ const MODES = [
   { value: 'voice_design', label: '声音设计' },
 ]
 
+const PARAM_TOOLTIPS = {
+  temperature: {
+    title: 'Temperature（温度）',
+    desc: '控制生成语音的随机性和多样性。值越低，输出越确定和稳定；值越高，变化越大、更有表现力。',
+    effect: '偏低（0.1~0.5）：发音稳定，适合正式播报\n偏高（1.0~2.0）：语气丰富，适合情感表达',
+  },
+  top_p: {
+    title: 'Top-p（核采样）',
+    desc: '限制每次只考虑累积概率超过 p 的最可能 token。与 temperature 配合使用，控制生成内容的多样性。',
+    effect: '偏低（0.1~0.5）：只选最可能的词，输出稳定\n偏高（0.8~1.0）：考虑更多候选词，表达更自然',
+  },
+} as const
+
 function TTSPanel() {
   const [text, setText] = useState('你好，世界！')
   const [mode, setMode] = useState('custom_voice')
@@ -23,6 +36,9 @@ function TTSPanel() {
   const [loading, setLoading] = useState(false)
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
   const [blob, setBlob] = useState<Blob | null>(null)
+
+  // Tooltip popover state
+  const [tooltipKey, setTooltipKey] = useState<string | null>(null)
 
   // Completion modal
   const [showCompletionModal, setShowCompletionModal] = useState(false)
@@ -267,16 +283,52 @@ function TTSPanel() {
         {showAdvanced && (
           <div className="grid grid-cols-2 gap-4 mt-3 pt-3 border-t border-gray-700">
             <div>
-              <label className="block text-sm text-gray-400 mb-1">Temperature ({temperature})</label>
+              <label className="block text-sm text-gray-400 mb-1 flex items-center gap-1">
+                Temperature ({temperature})
+                <button
+                  type="button"
+                  onClick={() => setTooltipKey(tooltipKey === 'temperature' ? null : 'temperature')}
+                  className={`text-xs cursor-help transition-colors ${
+                    tooltipKey === 'temperature' ? 'text-cyan-400' : 'text-gray-600 hover:text-cyan-400'
+                  }`}
+                >
+                  ⓘ
+                </button>
+              </label>
               <input type="range" min={0.1} max={2.0} step={0.05} value={temperature}
                      onChange={(e) => setTemperature(parseFloat(e.target.value))}
                      className="w-full accent-cyan-500" />
+              {tooltipKey === 'temperature' && (
+                <div className="mt-2 p-3 bg-gray-900 border border-gray-700 rounded text-xs text-gray-300 space-y-1">
+                  <p className="font-medium text-cyan-400">{PARAM_TOOLTIPS.temperature.title}</p>
+                  <p>{PARAM_TOOLTIPS.temperature.desc}</p>
+                  <pre className="whitespace-pre-wrap text-gray-400">影响：{PARAM_TOOLTIPS.temperature.effect}</pre>
+                </div>
+              )}
             </div>
             <div>
-              <label className="block text-sm text-gray-400 mb-1">Top-p ({topP})</label>
+              <label className="block text-sm text-gray-400 mb-1 flex items-center gap-1">
+                Top-p ({topP})
+                <button
+                  type="button"
+                  onClick={() => setTooltipKey(tooltipKey === 'top_p' ? null : 'top_p')}
+                  className={`text-xs cursor-help transition-colors ${
+                    tooltipKey === 'top_p' ? 'text-cyan-400' : 'text-gray-600 hover:text-cyan-400'
+                  }`}
+                >
+                  ⓘ
+                </button>
+              </label>
               <input type="range" min={0.1} max={1.0} step={0.05} value={topP}
                      onChange={(e) => setTopP(parseFloat(e.target.value))}
                      className="w-full accent-cyan-500" />
+              {tooltipKey === 'top_p' && (
+                <div className="mt-2 p-3 bg-gray-900 border border-gray-700 rounded text-xs text-gray-300 space-y-1">
+                  <p className="font-medium text-cyan-400">{PARAM_TOOLTIPS.top_p.title}</p>
+                  <p>{PARAM_TOOLTIPS.top_p.desc}</p>
+                  <pre className="whitespace-pre-wrap text-gray-400">影响：{PARAM_TOOLTIPS.top_p.effect}</pre>
+                </div>
+              )}
             </div>
           </div>
         )}
