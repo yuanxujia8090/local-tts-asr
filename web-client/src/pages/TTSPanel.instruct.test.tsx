@@ -13,12 +13,18 @@ describe('TTSPanel voice_design instruct field', () => {
     vi.stubGlobal('URL', { createObjectURL: () => 'blob:test' })
   })
 
+  const mockFetch = (mockBlob: Blob) => {
+    return vi.fn().mockImplementation((url: string) => {
+      if (url.includes('/custom-voices/voices') && !url.includes('/audio')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve([]) })
+      }
+      return Promise.resolve({ ok: true, blob: () => Promise.resolve(mockBlob) })
+    })
+  }
+
   it('sends instruct field in voice_design mode', async () => {
     const mockBlob = new Blob(['test'], { type: 'audio/wav' })
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      blob: () => Promise.resolve(mockBlob),
-    })
+    global.fetch = mockFetch(mockBlob)
 
     render(<TTSPanel />, { wrapper: TestWrapper })
 
@@ -35,7 +41,10 @@ describe('TTSPanel voice_design instruct field', () => {
     userEvent.click(button)
 
     await waitFor(() => {
-      const [url, config] = (global.fetch as any).mock.calls[0]
+      const speechCalls = (global.fetch as any).mock.calls.filter(
+        (call: any[]) => call[0]?.includes('/audio/speech')
+      )
+      const [url, config] = speechCalls[0]
       const body = JSON.parse(config.body)
       expect(body.mode).toBe('voice_design')
       expect(body.instruct).toBe('温柔的女声，音调偏高')
@@ -44,10 +53,7 @@ describe('TTSPanel voice_design instruct field', () => {
 
   it('does not send emotion field in voice_design mode', async () => {
     const mockBlob = new Blob(['test'], { type: 'audio/wav' })
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      blob: () => Promise.resolve(mockBlob),
-    })
+    global.fetch = mockFetch(mockBlob)
 
     render(<TTSPanel />, { wrapper: TestWrapper })
 
@@ -64,7 +70,10 @@ describe('TTSPanel voice_design instruct field', () => {
     userEvent.click(button)
 
     await waitFor(() => {
-      const [url, config] = (global.fetch as any).mock.calls[0]
+      const speechCalls = (global.fetch as any).mock.calls.filter(
+        (call: any[]) => call[0]?.includes('/audio/speech')
+      )
+      const [url, config] = speechCalls[0]
       const body = JSON.parse(config.body)
       expect(body.instruct).toBe('A cheerful voice')
       expect(body.emotion).toBeUndefined()
@@ -73,24 +82,24 @@ describe('TTSPanel voice_design instruct field', () => {
 
   it('sends emotion field in custom_voice mode', async () => {
     const mockBlob = new Blob(['test'], { type: 'audio/wav' })
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      blob: () => Promise.resolve(mockBlob),
-    })
+    global.fetch = mockFetch(mockBlob)
 
     render(<TTSPanel />, { wrapper: TestWrapper })
 
     const textarea = screen.getByPlaceholderText('输入要合成的文本...')
     fireEvent.change(textarea, { target: { value: 'test text' } })
 
-    const emotionSelect = screen.getAllByRole('combobox')[2]
+    const emotionSelect = screen.getAllByRole('combobox')[3]
     fireEvent.change(emotionSelect, { target: { value: 'happy' } })
 
     const button = screen.getByText('生成语音')
     userEvent.click(button)
 
     await waitFor(() => {
-      const [url, config] = (global.fetch as any).mock.calls[0]
+      const speechCalls = (global.fetch as any).mock.calls.filter(
+        (call: any[]) => call[0]?.includes('/audio/speech')
+      )
+      const [url, config] = speechCalls[0]
       const body = JSON.parse(config.body)
       expect(body.mode).toBe('custom_voice')
       expect(body.emotion).toBe('happy')

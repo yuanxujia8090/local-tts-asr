@@ -1,9 +1,10 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import TTSPanel from './TTSPanel'
 import ASRPanel from './ASRPanel'
+import VoiceManager from './VoiceManager'
 import { SettingsPanel } from '../components/SettingsPanel'
 
-type Tab = 'tts' | 'asr' | 'settings'
+type Tab = 'tts' | 'asr' | 'voices' | 'settings'
 
 function Dashboard() {
   const [activeTab, setActiveTab] = useState<Tab>('tts')
@@ -30,6 +31,12 @@ function Dashboard() {
           ASR 转录
         </button>
         <button
+          onClick={() => setActiveTab('voices')}
+          className={`px-4 py-2 font-medium ${activeTab === 'voices' ? 'text-cyan-400 border-b-2 border-cyan-400' : 'text-gray-400 hover:text-white'}`}
+        >
+          音色管理
+        </button>
+        <button
           onClick={() => setActiveTab('settings')}
           className={`px-4 py-2 font-medium ${activeTab === 'settings' ? 'text-cyan-400 border-b-2 border-cyan-400' : 'text-gray-400 hover:text-white'}`}
         >
@@ -41,6 +48,7 @@ function Dashboard() {
       <div className="bg-gray-800 rounded-lg p-6">
         {activeTab === 'tts' && <TTSPanel />}
         {activeTab === 'asr' && <ASRPanel />}
+        {activeTab === 'voices' && <VoiceManager />}
         {activeTab === 'settings' && <SettingsPanel />}
       </div>
     </div>

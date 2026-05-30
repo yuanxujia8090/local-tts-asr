@@ -29,4 +29,5 @@ TestResults.xml
 *.py[cod]
 *$py.class
 server/.env
+server/custom_voices/
 **/node_modules/

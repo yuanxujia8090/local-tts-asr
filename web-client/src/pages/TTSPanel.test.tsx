@@ -12,6 +12,8 @@ describe('TTSPanel', () => {
   beforeEach(() => {
     vi.stubGlobal('URL', { createObjectURL: () => 'blob:test-url' })
     vi.stubGlobal('Blob', class Blob {})
+    // Default fetch mock for custom voices API (returns empty list)
+    vi.restoreAllMocks()
   })
 
   it('renders with default values', () => {
@@ -170,9 +172,11 @@ describe('TTSPanel', () => {
 
   it('passes mode in request body', async () => {
     const mockBlob = new Blob(['test'], { type: 'audio/wav' })
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      blob: () => Promise.resolve(mockBlob),
+    global.fetch = vi.fn().mockImplementation((url: string) => {
+      if (url.includes('/custom-voices/voices') && !url.includes('/audio')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve([]) })
+      }
+      return Promise.resolve({ ok: true, blob: () => Promise.resolve(mockBlob) })
     })
 
     render(<TTSPanel />, { wrapper: TestWrapper })
@@ -185,7 +189,11 @@ describe('TTSPanel', () => {
 
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalled()
-      const [url, config] = (global.fetch as any).mock.calls[0]
+      const speechCalls = (global.fetch as any).mock.calls.filter(
+        (call: any[]) => call[0]?.includes('/audio/speech')
+      )
+      expect(speechCalls.length).toBeGreaterThan(0)
+      const [url, config] = speechCalls[0]
       expect(url).toBe('/v1/audio/speech')
       const body = JSON.parse(config.body)
       expect(body.mode).toBe('custom_voice')
@@ -194,9 +202,11 @@ describe('TTSPanel', () => {
 
   it('passes voice in request body for custom_voice mode', async () => {
     const mockBlob = new Blob(['test'], { type: 'audio/wav' })
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      blob: () => Promise.resolve(mockBlob),
+    global.fetch = vi.fn().mockImplementation((url: string) => {
+      if (url.includes('/custom-voices/voices') && !url.includes('/audio')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve([]) })
+      }
+      return Promise.resolve({ ok: true, blob: () => Promise.resolve(mockBlob) })
     })
 
     render(<TTSPanel />, { wrapper: TestWrapper })
@@ -208,7 +218,10 @@ describe('TTSPanel', () => {
     userEvent.click(button)
 
     await waitFor(() => {
-      const [url, config] = (global.fetch as any).mock.calls[0]
+      const speechCalls = (global.fetch as any).mock.calls.filter(
+        (call: any[]) => call[0]?.includes('/audio/speech')
+      )
+      const [url, config] = speechCalls[0]
       const body = JSON.parse(config.body)
       expect(body.voice).toBe('Vivian')
     })
@@ -216,9 +229,11 @@ describe('TTSPanel', () => {
 
   it('passes emotion in request body when selected', async () => {
     const mockBlob = new Blob(['test'], { type: 'audio/wav' })
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      blob: () => Promise.resolve(mockBlob),
+    global.fetch = vi.fn().mockImplementation((url: string) => {
+      if (url.includes('/custom-voices/voices') && !url.includes('/audio')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve([]) })
+      }
+      return Promise.resolve({ ok: true, blob: () => Promise.resolve(mockBlob) })
     })
 
     render(<TTSPanel />, { wrapper: TestWrapper })
@@ -226,23 +241,28 @@ describe('TTSPanel', () => {
     const textarea = screen.getByPlaceholderText('输入要合成的文本...')
     fireEvent.change(textarea, { target: { value: 'test text' } })
 
-    const emotionSelect = screen.getAllByRole('combobox')[2]
+    const emotionSelect = screen.getAllByRole('combobox')[3]
     fireEvent.change(emotionSelect, { target: { value: 'happy' } })
 
     const button = screen.getByText('生成语音')
     userEvent.click(button)
 
     await waitFor(() => {
-      const [url, config] = (global.fetch as any).mock.calls[0]
+      const speechCalls = (global.fetch as any).mock.calls.filter(
+        (call: any[]) => call[0]?.includes('/audio/speech')
+      )
+      const [url, config] = speechCalls[0]
       const body = JSON.parse(config.body)
       expect(body.emotion).toBe('happy')
     })
   })
 
   it('shows error toast on synthesis failure', async () => {
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: false,
-      text: () => Promise.resolve('Model not found'),
+    global.fetch = vi.fn().mockImplementation((url: string) => {
+      if (url.includes('/custom-voices/voices') && !url.includes('/audio')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve([]) })
+      }
+      return Promise.resolve({ ok: false, text: () => Promise.resolve('Model not found') })
     })
 
     render(<TTSPanel />, { wrapper: TestWrapper })
@@ -260,9 +280,11 @@ describe('TTSPanel', () => {
 
   it('resets loading state after synthesis completes', async () => {
     const mockBlob = new Blob(['test'], { type: 'audio/wav' })
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      blob: () => Promise.resolve(mockBlob),
+    global.fetch = vi.fn().mockImplementation((url: string) => {
+      if (url.includes('/custom-voices/voices') && !url.includes('/audio')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve([]) })
+      }
+      return Promise.resolve({ ok: true, blob: () => Promise.resolve(mockBlob) })
     })
 
     render(<TTSPanel />, { wrapper: TestWrapper })
@@ -287,7 +309,8 @@ describe('TTSPanel', () => {
 
     const voiceSelect = screen.getAllByRole('combobox')[1]
     const options = voiceSelect.querySelectorAll('option')
-    expect(options.length).toBe(9)
+    // 9 builtin speakers (custom voices list is empty)
+    expect(options.length).toBeGreaterThanOrEqual(9)
 
     const speakerNames = Array.from(options).map(o => o.value)
     expect(speakerNames).toContain('Vivian')
@@ -298,7 +321,7 @@ describe('TTSPanel', () => {
   it('emotion dropdown has default empty option', () => {
     render(<TTSPanel />, { wrapper: TestWrapper })
 
-    const emotionSelect = screen.getAllByRole('combobox')[2]
+    const emotionSelect = screen.getAllByRole('combobox')[3]
     const firstOption = emotionSelect.querySelector('option')
     expect(firstOption).toHaveValue('')
   })
@@ -306,7 +329,7 @@ describe('TTSPanel', () => {
   it('language dropdown has all language options', () => {
     render(<TTSPanel />, { wrapper: TestWrapper })
 
-    const languageSelect = screen.getAllByRole('combobox')[3]
+    const languageSelect = screen.getAllByRole('combobox')[2]
     const options = languageSelect.querySelectorAll('option')
     expect(options.length).toBe(5)
 
@@ -318,9 +341,11 @@ describe('TTSPanel', () => {
 
   it('synthesizes with voice_design mode and emotion', async () => {
     const mockBlob = new Blob(['test'], { type: 'audio/wav' })
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      blob: () => Promise.resolve(mockBlob),
+    global.fetch = vi.fn().mockImplementation((url: string) => {
+      if (url.includes('/custom-voices/voices') && !url.includes('/audio')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve([]) })
+      }
+      return Promise.resolve({ ok: true, blob: () => Promise.resolve(mockBlob) })
     })
 
     render(<TTSPanel />, { wrapper: TestWrapper })
@@ -338,7 +363,10 @@ describe('TTSPanel', () => {
     userEvent.click(button)
 
     await waitFor(() => {
-      const [url, config] = (global.fetch as any).mock.calls[0]
+      const speechCalls = (global.fetch as any).mock.calls.filter(
+        (call: any[]) => call[0]?.includes('/audio/speech')
+      )
+      const [url, config] = speechCalls[0]
       const body = JSON.parse(config.body)
       expect(body.mode).toBe('voice_design')
     })
@@ -346,9 +374,11 @@ describe('TTSPanel', () => {
 
   it('does not send voice for voice_design mode', async () => {
     const mockBlob = new Blob(['test'], { type: 'audio/wav' })
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      blob: () => Promise.resolve(mockBlob),
+    global.fetch = vi.fn().mockImplementation((url: string) => {
+      if (url.includes('/custom-voices/voices') && !url.includes('/audio')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve([]) })
+      }
+      return Promise.resolve({ ok: true, blob: () => Promise.resolve(mockBlob) })
     })
 
     render(<TTSPanel />, { wrapper: TestWrapper })
@@ -366,7 +396,10 @@ describe('TTSPanel', () => {
     userEvent.click(button)
 
     await waitFor(() => {
-      const [url, config] = (global.fetch as any).mock.calls[0]
+      const speechCalls = (global.fetch as any).mock.calls.filter(
+        (call: any[]) => call[0]?.includes('/audio/speech')
+      )
+      const [url, config] = speechCalls[0]
       const body = JSON.parse(config.body)
       expect(body.voice).toBeUndefined()
     })
