@@ -7,7 +7,7 @@ describe('useASR', () => {
     vi.restoreAllMocks()
   })
 
-  it('sends multipart POST with file on transcribe', async () => {
+  it('sends multipart POST with file and response_format in query params on transcribe', async () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       text: () => Promise.resolve('hello world'),
@@ -18,14 +18,16 @@ describe('useASR', () => {
 
     await result.current.transcribe(mockFile, 'text')
 
-    expect(global.fetch).toHaveBeenCalledWith('/v1/audio/transcriptions', {
-      method: 'POST',
-      body: expect.any(FormData),
-    })
+    expect(global.fetch).toHaveBeenCalledWith(
+      '/v1/audio/transcriptions?response_format=text',
+      {
+        method: 'POST',
+        body: expect.any(FormData),
+      }
+    )
 
     const formData = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body as FormData
     expect(formData.get('file')).toBe(mockFile)
-    expect(formData.get('response_format')).toBe('text')
   })
 
   it('returns text string for text format', async () => {
@@ -45,7 +47,7 @@ describe('useASR', () => {
       text: 'hello world',
       language: 'en',
       duration: 1.5,
-      segments: [{ start: 0.1, end: 0.5, word: 'hello' }],
+      words: [{ start: 0.1, end: 0.5, word: 'hello' }],
     }
 
     global.fetch = vi.fn().mockResolvedValue({
@@ -94,7 +96,7 @@ describe('useASR', () => {
     const { result } = renderHook(() => useASR())
     await result.current.transcribe(new File(['data'], 'test.wav'))
 
-    const formData = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body as FormData
-    expect(formData.get('response_format')).toBe('text')
+    const callArgs = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0]
+    expect(callArgs[0]).toContain('response_format=text')
   })
 })

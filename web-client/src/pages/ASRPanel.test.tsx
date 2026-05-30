@@ -367,7 +367,8 @@ describe('ASRPanel', () => {
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalled()
       const [url, config] = (global.fetch as any).mock.calls[0]
-      expect(url).toBe('/v1/audio/transcriptions')
+      expect(url).toContain('/v1/audio/transcriptions')
+      expect(url).toContain('response_format=verbose_json')
 
       const formData = config.body as FormData
       expect(formData.get('file')).toBeDefined()

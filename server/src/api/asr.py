@@ -4,7 +4,7 @@ import json
 import logging
 import os
 import tempfile
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Query
 from fastapi.responses import Response
 
 from ..engines.base import EngineFactory, ASRResult
@@ -16,8 +16,12 @@ logger = logging.getLogger(__name__)
 
 
 @router.post("/transcriptions")
-async def transcribe(file: UploadFile = File(...), model: str = "qwen3-asr",
-                     response_format: str = "text", language: str | None = None):
+async def transcribe(
+    file: UploadFile = File(...),
+    model: str = "qwen3-asr",
+    response_format: str = Query(default="text"),
+    language: str | None = Query(default=None),
+):
     """Transcribe audio to text. OpenAI-compatible endpoint."""
     tmp_path = None
     normalized = None
@@ -67,7 +71,7 @@ async def transcribe(file: UploadFile = File(...), model: str = "qwen3-asr",
             "duration": result.duration,
         }
         if result.words:
-            resp["segments"] = [
+            resp["words"] = [
                 {"start": w.start_time, "end": w.end_time, "word": w.text}
                 for w in result.words
             ]
@@ -84,8 +88,11 @@ async def transcribe(file: UploadFile = File(...), model: str = "qwen3-asr",
 
 
 @router.post("/alignment")
-async def align(file: UploadFile = File(...), model: str = "qwen3-asr",
-                language: str | None = None):
+async def align(
+    file: UploadFile = File(...),
+    model: str = "qwen3-asr",
+    language: str | None = Query(default=None),
+):
     """Word-level alignment endpoint — delegates to transcriptions with verbose_json."""
     # Reuse the transcription logic but force verbose_json format
     tmp_path = None

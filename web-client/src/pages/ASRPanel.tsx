@@ -23,6 +23,56 @@ function ASRPanel() {
     }
   }
 
+  const handleSaveResult = () => {
+    if (!result) return
+
+    // Save as JSON with word timestamps
+    const data = {
+      text: result.text,
+      language: result.language,
+      duration: result.duration,
+      words: result.words,
+    }
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `asr_${file?.name?.replace(/\.[^.]+$/, '') || 'transcript'}_${Date.now()}.json`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+
+    showToast('转录结果已保存', 'success')
+  }
+
+  const handleSaveText = () => {
+    if (!result) return
+
+    // Save as plain text with timestamps
+    let content = result.text + '\n\n'
+
+    if (result.words && result.words.length > 0) {
+      content += '=== Word-level Timestamps ===\n'
+      for (const w of result.words) {
+        content += `[${w.start.toFixed(2)}s - ${w.end.toFixed(2)}s] ${w.word}\n`
+      }
+    }
+
+    const blob = new Blob([content], { type: 'text/plain' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `asr_${file?.name?.replace(/\.[^.]+$/, '') || 'transcript'}_${Date.now()}.txt`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+
+    showToast('转录文本已保存', 'success')
+  }
+
   return (
     <div className="space-y-4">
       <h2 className="text-xl font-semibold text-cyan-300">ASR 转录测试</h2>
@@ -52,8 +102,21 @@ function ASRPanel() {
       {/* Result Display */}
       {result && (
         <div className="mt-4 space-y-3">
+          {/* Text + Save buttons */}
           <div>
-            <h3 className="text-sm text-gray-400">转录文本</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm text-gray-400">转录文本</h3>
+              <div className="flex gap-2">
+                <button onClick={handleSaveText}
+                        className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-xs">
+                  保存文本 (.txt)
+                </button>
+                <button onClick={handleSaveResult}
+                        className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-xs">
+                  保存完整 (.json)
+                </button>
+              </div>
+            </div>
             <p className="text-white bg-gray-900 p-3 rounded mt-1">{result.text}</p>
           </div>
 

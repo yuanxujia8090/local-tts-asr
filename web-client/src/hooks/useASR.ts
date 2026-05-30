@@ -9,9 +9,10 @@ export function useASR() {
   const transcribe = async (file: File, format: string = 'text'): Promise<ASRResult | string> => {
     const formData = new FormData()
     formData.append('file', file)
-    formData.append('response_format', format)
 
-    const resp = await fetch('/v1/audio/transcriptions', {
+    const url = `/v1/audio/transcriptions?response_format=${encodeURIComponent(format)}`
+
+    const resp = await fetch(url, {
       method: 'POST',
       body: formData,
     })
