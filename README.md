@@ -143,6 +143,9 @@ curl http://localhost:8000/v1/models
 | `ref_audio` | string | 条件 | — | 参考音频路径（voice_clone 模式下必需） |
 | `ref_text` | string | 条件 | — | 参考音频文本（voice_clone 模式） |
 | `instruct` | string | 条件 | — | 声音描述（voice_design 模式下必需） |
+| `temperature` | number | 否 | `0.9` | 生成随机性（0.1~2.0，值越高越有表现力） |
+| `top_p` | number | 否 | `1.0` | 核采样阈值（0.1~1.0，控制候选词范围） |
+| `max_new_tokens` | int | 否 | — | 最大生成 token 数 |
 
 可用音色：`Vivian`, `Serena`, `Uncle_Fu`, `Dylan`, `Eric`, `Ryan`, `Aiden`, `Ono_Anna`, `Sohee`
 
@@ -169,11 +172,18 @@ curl -X POST http://localhost:8000/v1/audio/speech \
   -d '{"input": "今天天气真好,适合出去走走看看。", "instruct": "温暖、温柔的年轻女性声音，语速偏慢"}' \
   -o speech3.wav
 
-# voice_clone 模式 — 使用参考音频克隆声音
+# voice_clone 模式 — 使用参考音频克隆声音（JSON body，ref_audio 为路径）
 curl -X POST http://localhost:8000/v1/audio/speech \
   -H "Content-Type: application/json" \
   -d '{"input": "这是一段克隆的声音", "mode": "voice_clone", "ref_audio": "/path/to/ref.wav", "ref_text": "今天天气真好,适合出去走走看看。"}' \
   -o speech4.wav
+
+# voice_clone 模式 — 上传音频文件（multipart/form-data）
+curl -X POST http://localhost:8000/v1/audio/speech \
+  -F "input=这是一段克隆的声音" \
+  -F "mode=voice_clone" \
+  -F "ref_audio_file=@reference.wav" \
+  -o speech5.wav
 ```
 
 ### ASR — 语音识别
@@ -284,6 +294,51 @@ curl -X POST http://localhost:8000/v1/audio/alignment \
   | python3 -m json.tool
 ```
 
+### Custom Voices — 自定义音色管理
+
+**GET `/v1/custom-voices/voices`** — 列出所有自定义音色
+
+```bash
+curl http://localhost:8000/v1/custom-voices/voices | python3 -m json.tool
+```
+
+响应：
+```json
+[
+  {
+    "id": "custom_3ac081e1",
+    "name": "我的音色",
+    "filename": "custom_3ac081e1.wav",
+    "created_at": "2025-01-15T10:30:00+00:00"
+  }
+]
+```
+
+**POST `/v1/custom-voices/voices`** — 保存自定义音色
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `name` | string | 是 | 音色名称 |
+| `ref_audio` | file | 是 | 参考音频文件（支持 wav/mp3/flac/ogg） |
+
+```bash
+curl -X POST http://localhost:8000/v1/custom-voices/voices \
+  -F "name=我的音色" \
+  -F "ref_audio=@reference.wav"
+```
+
+**DELETE `/v1/custom-voices/voices/{voice_id}`** — 删除自定义音色
+
+```bash
+curl -X DELETE http://localhost:8000/v1/custom-voices/voices/custom_3ac081e1
+```
+
+**GET `/v1/custom-voices/voices/{voice_id}/audio`** — 获取音色音频
+
+```bash
+curl http://localhost:8000/v1/custom-voices/voices/custom_3ac081e1/audio -o voice.wav
+```
+
 ### 其他端点
 
 **GET `/v1/models`** — 列出可用模型（OpenAI 兼容）
@@ -339,25 +394,41 @@ curl http://localhost:8000/health | python3 -m json.tool
 
 ## WebUI 使用
 
-启动前端后访问 `http://localhost:5173`，包含三个 Tab：
+启动前端后访问 `http://localhost:5173`，包含四个 Tab：
 
 ### TTS 合成
 
-- 输入文本
-- 选择音色（9 种内置音色）
-- 选择情绪风格
-- 选择语言
-- 点击"生成语音"，结果直接在页面播放
+- 输入文本（多行）
+- **三种合成模式**（Tab 切换）：
+  - **内置音色** — 从下拉列表选择 9 种内置音色 + 自定义音色，可选情绪风格
+  - **声音克隆** — 上传参考音频文件，合成相同声线的语音
+  - **声音设计** — 输入文字描述（如"温柔的女声，音调偏高"），AI 按描述生成声音
+- 语言选择（Auto / Chinese / English / Japanese / Korean）
+- **高级参数**（可展开）：Temperature 和 Top-p 滑块，带 ⓘ 说明提示
+- 点击"生成语音"
+  - 自动清空上次生成的音频
+  - 合成完成后弹出 Toast 提示（2秒自动消失）
+- 结果区域：音频播放器 + **保存为自定义音色** + **下载音频**
+  - "保存为自定义音色"：将任意模式生成的音频保存，后续可在内置音色中复用
+  - "下载音频"：导出 WAV/MP3 文件
 
 ### ASR 转录
 
-- 上传音频文件
+- 上传音频文件（支持播放预览）
 - 点击"开始转录"
-- 显示转录文本和字词级时间戳
+- 显示转录文本、字词级时间戳和语言/时长信息
+- 支持保存为纯文本 (.txt) 或完整 JSON（含时间戳）
+
+### 音色管理
+
+- 查看所有已保存的自定义音色（名称、创建时间）
+- 点击播放按钮试听
+- 删除不需要的音色
+- 保存的自定义音色会出现在 TTS 合成的内置音色下拉列表中
 
 ### 设置
 
-- 查看当前后端运行模式
+- 查看当前后端运行模式（local / remote）
 - 配置远程 API URL（remote 模式下）
 - 设置保存到本地存储，需要重启后端服务生效
 
