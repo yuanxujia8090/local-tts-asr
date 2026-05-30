@@ -24,6 +24,9 @@ function TTSPanel() {
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
   const [blob, setBlob] = useState<Blob | null>(null)
 
+  // Completion modal
+  const [showCompletionModal, setShowCompletionModal] = useState(false)
+
   // Advanced parameters
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [temperature, setTemperature] = useState(0.9)
@@ -62,6 +65,10 @@ function TTSPanel() {
   const handleSynthesize = async () => {
     if (!text.trim()) return
     setLoading(true)
+    // Clear previous audio
+    setBlob(null)
+    if (audioUrl) URL.revokeObjectURL(audioUrl)
+    setAudioUrl(null)
     try {
       const req: TTSRequest = { input: text, mode }
 
@@ -83,6 +90,7 @@ function TTSPanel() {
       setBlob(audioBlob)
       const url = URL.createObjectURL(audioBlob)
       setAudioUrl(url)
+      showToast('语音合成完成', 'success')
     } catch (err: any) {
       showToast(err.message || '合成失败', 'error')
     } finally {
@@ -296,6 +304,8 @@ function TTSPanel() {
           </div>
         </div>
       )}
+
+
 
       {/* Save Custom Voice Dialog */}
       {showSaveDialog && (

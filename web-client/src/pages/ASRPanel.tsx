@@ -4,6 +4,7 @@ import { useToast } from '../hooks/useToast'
 
 function ASRPanel() {
   const [file, setFile] = useState<File | null>(null)
+  const [audioUrl, setAudioUrl] = useState<string | null>(null)
   const [result, setResult] = useState<ASRResult | null>(null)
   const [loading, setLoading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -84,7 +85,14 @@ function ASRPanel() {
           ref={fileInputRef}
           type="file"
           accept="audio/*"
-          onChange={(e) => e.target.files && setFile(e.target.files[0])}
+          onChange={(e) => {
+            const f = e.target.files?.[0]
+            if (!f) return
+            setFile(f)
+            // Create preview URL for playback
+            if (audioUrl) URL.revokeObjectURL(audioUrl)
+            setAudioUrl(URL.createObjectURL(f))
+          }}
           className="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4
                      file:rounded file:border-0 file:text-sm file:font-semibold
                      file:bg-cyan-600 file:text-white hover:file:bg-cyan-500"
@@ -98,6 +106,14 @@ function ASRPanel() {
       >
         {loading ? '转录中...' : '开始转录'}
       </button>
+
+      {/* Audio Player for uploaded file */}
+      {audioUrl && (
+        <div>
+          <label className="block text-sm text-gray-400 mb-1">上传的音频</label>
+          <audio controls src={audioUrl} className="w-full" />
+        </div>
+      )}
 
       {/* Result Display */}
       {result && (

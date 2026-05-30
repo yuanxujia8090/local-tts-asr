@@ -109,7 +109,7 @@ describe('useToast', () => {
       expect(screen.getByTestId('toast-count')).toHaveTextContent('1')
     })
 
-    expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 5000)
+    expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 2000)
     setTimeoutSpy.mockRestore()
   })
 })
