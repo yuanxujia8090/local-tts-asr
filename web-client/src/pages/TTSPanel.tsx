@@ -92,14 +92,14 @@ function TTSPanel() {
 
   const handleSaveCustomVoice = async () => {
     if (!saveVoiceName.trim()) { showToast('请输入音色名称', 'error'); return }
-    if (!refAudio) { showToast('请先上传参考音频', 'error'); return }
+    if (!blob) { showToast('请先生成音频', 'error'); return }
 
     try {
-      const { save: saveVoice } = await import('../hooks/useTTS')
       // Direct fetch for saving
       const formData = new FormData()
       formData.append('name', saveVoiceName.trim())
-      formData.append('ref_audio', refAudio)
+      const audioFile = new File([blob], 'voice.wav', { type: blob.type || 'audio/wav' })
+      formData.append('ref_audio', audioFile)
 
       const resp = await fetch('/v1/custom-voices/voices', {
         method: 'POST',
@@ -201,15 +201,7 @@ function TTSPanel() {
             </select>
           </div>
 
-          {/* Save current reference audio as custom voice */}
-          {refAudio && (
-            <div className="flex items-end">
-              <button onClick={() => setShowSaveDialog(true)}
-                      className="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 rounded text-sm font-medium">
-                💾 保存为自定义音色
-              </button>
-            </div>
-          )}
+
 
           <div>
             <label className="block text-sm text-gray-400 mb-1">语言</label>
@@ -288,14 +280,20 @@ function TTSPanel() {
         {loading ? '合成中...' : '生成语音'}
       </button>
 
-      {/* Audio Player + Download */}
-      {audioUrl && (
+      {/* Audio Player + Actions */}
+      {audioUrl && blob && (
         <div className="mt-4 space-y-2">
           <audio controls src={audioUrl} className="w-full" />
-          <button onClick={handleDownload}
-                  className="px-4 py-1.5 bg-gray-700 hover:bg-gray-600 rounded text-sm">
-            ⬇ 下载音频
-          </button>
+          <div className="flex gap-3">
+            <button onClick={() => setShowSaveDialog(true)}
+                    className="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 rounded text-sm font-medium">
+              💾 保存为自定义音色
+            </button>
+            <button onClick={handleDownload}
+                    className="px-4 py-1.5 bg-gray-700 hover:bg-gray-600 rounded text-sm">
+              ⬇ 下载音频
+            </button>
+          </div>
         </div>
       )}
 
