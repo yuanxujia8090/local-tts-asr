@@ -23,40 +23,40 @@ describe('TTSPanel', () => {
     const textarea = screen.getByPlaceholderText('输入要合成的文本...')
     expect(textarea).toHaveValue('你好，世界！')
 
-    const modeSelect = screen.getAllByRole('combobox')[0]
-    expect(modeSelect).toHaveValue('custom_voice')
+    // Mode tabs should show '内置音色' as active
+    expect(screen.getByText('内置音色')).toHaveClass('bg-cyan-600')
   })
 
   it('renders speaker selection for custom_voice mode', () => {
     render(<TTSPanel />, { wrapper: TestWrapper })
 
-    const voiceSelect = screen.getAllByRole('combobox')[1]
+    const voiceSelect = screen.getAllByRole('combobox')[0]
     expect(voiceSelect).toBeInTheDocument()
   })
 
   it('renders emotion dropdown for custom_voice mode', () => {
     render(<TTSPanel />, { wrapper: TestWrapper })
 
-    const emotionSelect = screen.getAllByRole('combobox')[2]
+    const emotionSelect = screen.getAllByRole('combobox')[1]
     expect(emotionSelect).toBeInTheDocument()
   })
 
   it('renders voice design input for voice_design mode', async () => {
     render(<TTSPanel />, { wrapper: TestWrapper })
 
-    const modeSelect = screen.getAllByRole('combobox')[0]
-    fireEvent.change(modeSelect, { target: { value: 'voice_design' } })
+    const voiceDesignTab = screen.getByText('声音设计')
+    userEvent.click(voiceDesignTab)
 
     await waitFor(() => {
-      expect(screen.getByPlaceholderText('例如：温柔的女声，音调偏高')).toBeInTheDocument()
+      expect(screen.getByPlaceholderText('例如：温柔的女声，音调偏高，带一点笑意')).toBeInTheDocument()
     })
   })
 
   it('renders file upload for voice_clone mode', async () => {
     render(<TTSPanel />, { wrapper: TestWrapper })
 
-    const modeSelect = screen.getAllByRole('combobox')[0]
-    fireEvent.change(modeSelect, { target: { value: 'voice_clone' } })
+    const voiceCloneTab = screen.getByText('声音克隆')
+    userEvent.click(voiceCloneTab)
 
     await waitFor(() => {
       expect(screen.getByText('参考音频')).toBeInTheDocument()
@@ -69,11 +69,11 @@ describe('TTSPanel', () => {
   it('hides speaker/emotion controls when not in custom_voice mode', async () => {
     render(<TTSPanel />, { wrapper: TestWrapper })
 
-    const modeSelect = screen.getAllByRole('combobox')[0]
-    fireEvent.change(modeSelect, { target: { value: 'voice_design' } })
+    const voiceDesignTab = screen.getByText('声音设计')
+    userEvent.click(voiceDesignTab)
 
     await waitFor(() => {
-      expect(screen.queryByPlaceholderText('例如：温柔的女声，音调偏高')).toBeInTheDocument()
+      expect(screen.queryByPlaceholderText('例如：温柔的女声，音调偏高，带一点笑意')).toBeInTheDocument()
     })
 
     const emotionLabel = screen.queryByText('情绪')
@@ -103,11 +103,11 @@ describe('TTSPanel', () => {
   it('shows voice design error when emotion is empty', async () => {
     render(<TTSPanel />, { wrapper: TestWrapper })
 
-    const modeSelect = screen.getAllByRole('combobox')[0]
-    fireEvent.change(modeSelect, { target: { value: 'voice_design' } })
+    const voiceDesignTab = screen.getByText('声音设计')
+    userEvent.click(voiceDesignTab)
 
     await waitFor(() => {
-      expect(screen.getByPlaceholderText('例如：温柔的女声，音调偏高')).toBeInTheDocument()
+      expect(screen.getByPlaceholderText('例如：温柔的女声，音调偏高，带一点笑意')).toBeInTheDocument()
     })
 
     const button = screen.getByText('生成语音')
@@ -241,7 +241,7 @@ describe('TTSPanel', () => {
     const textarea = screen.getByPlaceholderText('输入要合成的文本...')
     fireEvent.change(textarea, { target: { value: 'test text' } })
 
-    const emotionSelect = screen.getAllByRole('combobox')[3]
+    const emotionSelect = screen.getAllByRole('combobox')[2]
     fireEvent.change(emotionSelect, { target: { value: 'happy' } })
 
     const button = screen.getByText('生成语音')
@@ -307,7 +307,7 @@ describe('TTSPanel', () => {
   it('all speakers are available in dropdown', () => {
     render(<TTSPanel />, { wrapper: TestWrapper })
 
-    const voiceSelect = screen.getAllByRole('combobox')[1]
+    const voiceSelect = screen.getAllByRole('combobox')[0]
     const options = voiceSelect.querySelectorAll('option')
     // 9 builtin speakers (custom voices list is empty)
     expect(options.length).toBeGreaterThanOrEqual(9)
@@ -321,7 +321,7 @@ describe('TTSPanel', () => {
   it('emotion dropdown has default empty option', () => {
     render(<TTSPanel />, { wrapper: TestWrapper })
 
-    const emotionSelect = screen.getAllByRole('combobox')[3]
+    const emotionSelect = screen.getAllByRole('combobox')[2]
     const firstOption = emotionSelect.querySelector('option')
     expect(firstOption).toHaveValue('')
   })
@@ -329,7 +329,7 @@ describe('TTSPanel', () => {
   it('language dropdown has all language options', () => {
     render(<TTSPanel />, { wrapper: TestWrapper })
 
-    const languageSelect = screen.getAllByRole('combobox')[2]
+    const languageSelect = screen.getAllByRole('combobox')[1]
     const options = languageSelect.querySelectorAll('option')
     expect(options.length).toBe(5)
 
@@ -353,14 +353,18 @@ describe('TTSPanel', () => {
     const textarea = screen.getByPlaceholderText('输入要合成的文本...')
     fireEvent.change(textarea, { target: { value: 'design test' } })
 
-    const modeSelect = screen.getAllByRole('combobox')[0]
-    fireEvent.change(modeSelect, { target: { value: 'voice_design' } })
+    const voiceDesignTab = screen.getByText('声音设计')
+    fireEvent.click(voiceDesignTab)
 
-    const designInput = screen.getByPlaceholderText('例如：温柔的女声，音调偏高')
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('例如：温柔的女声，音调偏高，带一点笑意')).toBeInTheDocument()
+    })
+
+    const designInput = screen.getByPlaceholderText('例如：温柔的女声，音调偏高，带一点笑意')
     fireEvent.change(designInput, { target: { value: '温柔的女声' } })
 
     const button = screen.getByText('生成语音')
-    userEvent.click(button)
+    fireEvent.click(button)
 
     await waitFor(() => {
       const speechCalls = (global.fetch as any).mock.calls.filter(
@@ -386,14 +390,18 @@ describe('TTSPanel', () => {
     const textarea = screen.getByPlaceholderText('输入要合成的文本...')
     fireEvent.change(textarea, { target: { value: 'design test' } })
 
-    const modeSelect = screen.getAllByRole('combobox')[0]
-    fireEvent.change(modeSelect, { target: { value: 'voice_design' } })
+    const voiceDesignTab = screen.getByText('声音设计')
+    fireEvent.click(voiceDesignTab)
 
-    const designInput = screen.getByPlaceholderText('例如：温柔的女声，音调偏高')
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('例如：温柔的女声，音调偏高，带一点笑意')).toBeInTheDocument()
+    })
+
+    const designInput = screen.getByPlaceholderText('例如：温柔的女声，音调偏高，带一点笑意')
     fireEvent.change(designInput, { target: { value: '温柔的女声' } })
 
     const button = screen.getByText('生成语音')
-    userEvent.click(button)
+    fireEvent.click(button)
 
     await waitFor(() => {
       const speechCalls = (global.fetch as any).mock.calls.filter(
@@ -412,16 +420,11 @@ describe('TTSPanel', () => {
     expect(textarea.tagName).toBe('TEXTAREA')
   })
 
-  it('mode select has three options', () => {
+  it('mode tabs show three options', () => {
     render(<TTSPanel />, { wrapper: TestWrapper })
 
-    const modeSelect = screen.getAllByRole('combobox')[0]
-    const options = modeSelect.querySelectorAll('option')
-    expect(options.length).toBe(3)
-
-    const labels = Array.from(options).map(o => o.textContent)
-    expect(labels).toContain('内置音色')
-    expect(labels).toContain('声音克隆')
-    expect(labels).toContain('声音设计')
+    expect(screen.getByText('内置音色')).toBeInTheDocument()
+    expect(screen.getByText('声音克隆')).toBeInTheDocument()
+    expect(screen.getByText('声音设计')).toBeInTheDocument()
   })
 })

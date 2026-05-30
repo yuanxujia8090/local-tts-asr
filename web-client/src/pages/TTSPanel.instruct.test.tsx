@@ -31,10 +31,10 @@ describe('TTSPanel voice_design instruct field', () => {
     const textarea = screen.getByPlaceholderText('输入要合成的文本...')
     fireEvent.change(textarea, { target: { value: 'design test' } })
 
-    const modeSelect = screen.getAllByRole('combobox')[0]
-    fireEvent.change(modeSelect, { target: { value: 'voice_design' } })
+    const voiceDesignTab = screen.getByText('声音设计')
+    fireEvent.click(voiceDesignTab)
 
-    const designInput = screen.getByPlaceholderText('例如：温柔的女声，音调偏高')
+    const designInput = screen.getByPlaceholderText('例如：温柔的女声，音调偏高，带一点笑意')
     fireEvent.change(designInput, { target: { value: '温柔的女声，音调偏高' } })
 
     const button = screen.getByText('生成语音')
@@ -60,10 +60,10 @@ describe('TTSPanel voice_design instruct field', () => {
     const textarea = screen.getByPlaceholderText('输入要合成的文本...')
     fireEvent.change(textarea, { target: { value: 'design test' } })
 
-    const modeSelect = screen.getAllByRole('combobox')[0]
-    fireEvent.change(modeSelect, { target: { value: 'voice_design' } })
+    const voiceDesignTab = screen.getByText('声音设计')
+    fireEvent.click(voiceDesignTab)
 
-    const designInput = screen.getByPlaceholderText('例如：温柔的女声，音调偏高')
+    const designInput = screen.getByPlaceholderText('例如：温柔的女声，音调偏高，带一点笑意')
     fireEvent.change(designInput, { target: { value: 'A cheerful voice' } })
 
     const button = screen.getByText('生成语音')
@@ -89,7 +89,7 @@ describe('TTSPanel voice_design instruct field', () => {
     const textarea = screen.getByPlaceholderText('输入要合成的文本...')
     fireEvent.change(textarea, { target: { value: 'test text' } })
 
-    const emotionSelect = screen.getAllByRole('combobox')[3]
+    const emotionSelect = screen.getAllByRole('combobox')[2]
     fireEvent.change(emotionSelect, { target: { value: 'happy' } })
 
     const button = screen.getByText('生成语音')

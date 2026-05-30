@@ -79,7 +79,7 @@ function TTSPanel() {
       req.temperature = temperature
       req.top_p = topP
 
-      const audioBlob = await synthesize(req)
+      const audioBlob = await synthesize(req, refAudio || undefined)
       setBlob(audioBlob)
       const url = URL.createObjectURL(audioBlob)
       setAudioUrl(url)
@@ -169,13 +169,24 @@ function TTSPanel() {
         />
       </div>
 
-      {/* Mode Selection */}
+      {/* Mode Selection — Tab Switcher */}
       <div>
         <label className="block text-sm text-gray-400 mb-1">合成模式</label>
-        <select value={mode} onChange={(e) => setMode(e.target.value)}
-                className="w-full bg-gray-900 border border-gray-700 rounded p-2 text-white">
-          {MODES.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
-        </select>
+        <div className="flex gap-2">
+          {MODES.map(m => (
+            <button
+              key={m.value}
+              onClick={() => setMode(m.value)}
+              className={`px-4 py-2 rounded font-medium text-sm transition-colors ${
+                mode === m.value
+                  ? 'bg-cyan-600 text-white'
+                  : 'bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700'
+              }`}
+            >
+              {m.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Controls based on mode */}
@@ -226,9 +237,12 @@ function TTSPanel() {
       {mode === 'voice_design' && (
         <div>
           <label className="block text-sm text-gray-400 mb-1">声音描述</label>
-          <input type="text" value={emotion} onChange={(e) => setEmotion(e.target.value)}
-                 className="w-full bg-gray-900 border border-gray-700 rounded p-2 text-white"
-                 placeholder="例如：温柔的女声，音调偏高" />
+          <textarea
+            value={emotion}
+            onChange={(e) => setEmotion(e.target.value)}
+            rows={6}
+            className="w-full bg-gray-900 border border-gray-700 rounded p-2 text-white resize-y"
+            placeholder="例如：温柔的女声，音调偏高，带一点笑意" />
         </div>
       )}
 

@@ -95,8 +95,8 @@ describe('Dashboard', () => {
     render(<Dashboard />, { wrapper: TestWrapper })
 
     const voiceSelects = screen.getAllByRole('combobox')
-    // First combobox is mode select, second is voice select
-    const voiceSelect = voiceSelects[1]
+    // First combobox is voice select (no mode select anymore, it's tabs)
+    const voiceSelect = voiceSelects[0]
     expect(voiceSelect).toHaveValue('Vivian')
   })
 
