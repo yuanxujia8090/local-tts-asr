@@ -8,7 +8,7 @@ import os
 import threading
 
 from .base import TTSEngine, ASREngine, WordTimestamp, ASRResult
-from ..utils.platform import get_backend
+from ..utils.platform import get_backend, check_mlx_available
 from ..utils.model_path import resolve_model_path
 from ..utils.punctuation import restore_punctuation
 
@@ -193,9 +193,25 @@ class MLXTTSEngine(TTSEngine):
         ref_text = kwargs.get("ref_text")
         instruct = kwargs.get("instruct", emotion)
 
+        # Resolve saved custom voice ID to actual reference audio path
+        if mode == "custom_voice" and voice and not self._is_builtin_speaker(voice):
+            ref_audio_path = self._resolve_custom_voice(voice)
+            if not ref_audio_path:
+                raise ValueError(f"Custom voice '{voice}' not found")
+            mode = "voice_clone"
+
         # Auto-infer mode from parameters if not explicitly set
         if mode == "custom_voice" and instruct and not voice:
             mode = "voice_design"
+
+        # Collect generation kwargs
+        gen_kwargs: dict = {}
+        if "temperature" in kwargs and kwargs["temperature"] is not None:
+            gen_kwargs["temperature"] = kwargs["temperature"]
+        if "top_p" in kwargs and kwargs["top_p"] is not None:
+            gen_kwargs["top_p"] = kwargs["top_p"]
+        if "max_new_tokens" in kwargs and kwargs["max_new_tokens"] is not None:
+            gen_kwargs["max_new_tokens"] = kwargs["max_new_tokens"]
 
         models_table = _get_models_table()
         if mode not in models_table:
@@ -220,6 +236,8 @@ class MLXTTSEngine(TTSEngine):
                 )
                 if instruct:
                     generate_kwargs["instruct"] = instruct
+                if gen_kwargs:
+                    generate_kwargs.update(gen_kwargs)
                 for result in model.generate(**generate_kwargs):
                     import numpy as np
                     audio_chunks.append(np.array(result.audio))
@@ -279,6 +297,39 @@ class MLXTTSEngine(TTSEngine):
 
         return data
 
+    @staticmethod
+    def _is_builtin_speaker(voice: str) -> bool:
+        """Check if voice is a built-in speaker name."""
+        return voice in QWEN_SPEAKERS
+
+    @staticmethod
+    def _resolve_custom_voice(voice_id: str) -> str | None:
+        """Resolve a saved custom voice ID to its reference audio path."""
+        import json
+        voices_dir = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+            "custom_voices",
+        )
+        index_path = os.path.join(voices_dir, "voices.json")
+        if not os.path.exists(index_path):
+            return None
+        try:
+            with open(index_path, "r", encoding="utf-8") as f:
+                voices = json.load(f)
+        except (json.JSONDecodeError, IOError):
+            return None
+        real_voices_dir = os.path.realpath(voices_dir)
+        for v in voices:
+            if v["id"] == voice_id:
+                filepath = os.path.join(voices_dir, v["filename"])
+                # Security: prevent path traversal
+                real_path = os.path.realpath(filepath)
+                if not real_path.startswith(real_voices_dir):
+                    return None
+                if os.path.exists(filepath):
+                    return filepath
+        return None
+
 
 # ── PyTorch TTS Engine (adapted from opc-cli) ─────────────────
 
@@ -294,6 +345,13 @@ class PyTorchTTSEngine(TTSEngine):
         mode = kwargs.get("mode", "custom_voice")
         ref_text = kwargs.get("ref_text")
         instruct = kwargs.get("instruct", emotion)
+
+        # Resolve saved custom voice ID to actual reference audio path
+        if mode == "custom_voice" and voice and not self._is_builtin_speaker(voice):
+            ref_audio_path = self._resolve_custom_voice(voice)
+            if not ref_audio_path:
+                raise ValueError(f"Custom voice '{voice}' not found")
+            mode = "voice_clone"
 
         # Auto-infer mode from parameters if not explicitly set
         if not mode or mode == "custom_voice":
@@ -311,6 +369,13 @@ class PyTorchTTSEngine(TTSEngine):
             max_new_tokens=4096, do_sample=True, top_k=50,
             top_p=1.0, temperature=0.9, repetition_penalty=1.05
         )
+        # Override with user-provided generation parameters
+        if "temperature" in kwargs and kwargs["temperature"] is not None:
+            gen_kwargs["temperature"] = kwargs["temperature"]
+        if "top_p" in kwargs and kwargs["top_p"] is not None:
+            gen_kwargs["top_p"] = kwargs["top_p"]
+        if "max_new_tokens" in kwargs and kwargs["max_new_tokens"] is not None:
+            gen_kwargs["max_new_tokens"] = kwargs["max_new_tokens"]
 
         fd, wav_path = tempfile.mkstemp(suffix=".wav")
         os.close(fd)
@@ -353,6 +418,39 @@ class PyTorchTTSEngine(TTSEngine):
         os.remove(wav_path)
 
         return data
+
+    @staticmethod
+    def _is_builtin_speaker(voice: str) -> bool:
+        """Check if voice is a built-in speaker name."""
+        return voice in QWEN_SPEAKERS
+
+    @staticmethod
+    def _resolve_custom_voice(voice_id: str) -> str | None:
+        """Resolve a saved custom voice ID to its reference audio path."""
+        import json
+        voices_dir = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+            "custom_voices",
+        )
+        index_path = os.path.join(voices_dir, "voices.json")
+        if not os.path.exists(index_path):
+            return None
+        try:
+            with open(index_path, "r", encoding="utf-8") as f:
+                voices = json.load(f)
+        except (json.JSONDecodeError, IOError):
+            return None
+        real_voices_dir = os.path.realpath(voices_dir)
+        for v in voices:
+            if v["id"] == voice_id:
+                filepath = os.path.join(voices_dir, v["filename"])
+                # Security: prevent path traversal
+                real_path = os.path.realpath(filepath)
+                if not real_path.startswith(real_voices_dir):
+                    return None
+                if os.path.exists(filepath):
+                    return filepath
+        return None
 
 
 # ── ASR model loading (adapted from opc-cli) ───────────────────
@@ -416,27 +514,49 @@ def _load_asr_cuda(model_id: str, with_aligner: bool = True):
         )
 
 
-def _get_asr_model(model_id: str, with_aligner: bool = True) -> object:
-    """Load and cache a Qwen3-ASR model with optional aligner (thread-safe)."""
-    cache_key = f"{get_backend()}_{model_id}_aligner_{with_aligner}"
+def _get_asr_mlx(model_id: str, with_aligner: bool = True) -> dict:
+    """Load ASR model via MLX (thread-safe)."""
+    cache_key = f"mlx_{model_id}_aligner_{with_aligner}"
 
     if cache_key in _asr_model_cache:
         return _asr_model_cache[cache_key]
 
     with _asr_model_lock:
         if cache_key not in _asr_model_cache:
-            backend = get_backend()
-            if backend == "mlx":
-                model = _load_asr_mlx(model_id)
-                result = {"asr": model}
-                if with_aligner:
-                    result["aligner"] = _load_aligner_mlx()
-                _asr_model_cache[cache_key] = result  # type: ignore[assignment]
-            else:
-                model = _load_asr_cuda(model_id, with_aligner=with_aligner)
-                _asr_model_cache[cache_key] = model  # type: ignore[assignment]
+            model = _load_asr_mlx(model_id)
+            result: dict = {"asr": model}
+            if with_aligner:
+                result["aligner"] = _load_aligner_mlx()
+            _asr_model_cache[cache_key] = result
 
     return _asr_model_cache[cache_key]
+
+
+def _get_asr_cuda(model_id: str, with_aligner: bool = True) -> object:
+    """Load ASR model via CUDA/PyTorch (thread-safe)."""
+    cache_key = f"cuda_{model_id}_aligner_{with_aligner}"
+
+    if cache_key in _asr_model_cache:
+        return _asr_model_cache[cache_key]
+
+    with _asr_model_lock:
+        if cache_key not in _asr_model_cache:
+            model = _load_asr_cuda(model_id, with_aligner=with_aligner)
+            _asr_model_cache[cache_key] = model
+
+    return _asr_model_cache[cache_key]
+
+
+def _get_asr_model(model_id: str, with_aligner: bool = True) -> object:
+    """Load and cache a Qwen3-ASR model with optional aligner (thread-safe).
+
+    Auto-detects backend based on current environment.
+    Prefers mlx if available on macOS, otherwise falls back to CUDA/PyTorch.
+    """
+    if check_mlx_available():
+        return _get_asr_mlx(model_id, with_aligner=with_aligner)
+    else:
+        return _get_asr_cuda(model_id, with_aligner=with_aligner)
 
 
 # ── ASR Engines (adapted from opc-cli) ────────────────────────

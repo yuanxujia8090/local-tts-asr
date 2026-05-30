@@ -8,7 +8,7 @@ class TTSRequest(BaseModel):
     """OpenAI-compatible TTS request with local extensions."""
     model: str = "qwen3-tts"
     input: str = Field(..., description="Text to synthesize")
-    voice: Optional[str] = Field(None, description="Speaker/voice ID (custom_voice mode)")
+    voice: Optional[str] = Field(None, description="Speaker/voice ID (custom_voice mode or saved custom voice ID)")
     emotion: Optional[str] = Field(None, description="Emotion/style hint (custom_voice mode)")
     language: Optional[str] = Field("Auto", description="Language code (Auto/Chinese/English...)")
     response_format: Optional[str] = Field("wav", description="Output format: wav/mp3")
@@ -16,6 +16,13 @@ class TTSRequest(BaseModel):
     ref_audio: Optional[str] = Field(None, description="Reference audio path (voice_clone mode)")
     ref_text: Optional[str] = Field(None, description="Reference text (voice_clone mode)")
     instruct: Optional[str] = Field(None, description="Voice description (voice_design mode)")
+    # Generation parameters
+    temperature: Optional[float] = Field(None, ge=0.1, le=2.0,
+                                        description="Sampling temperature")
+    top_p: Optional[float] = Field(None, ge=0.1, le=1.0,
+                                   description="Nucleus sampling top_p")
+    max_new_tokens: Optional[int] = Field(None, ge=1,
+                                          description="Maximum new tokens to generate")
 
 
 class ASRRequest(BaseModel):
@@ -45,3 +52,11 @@ class ModelResponse(BaseModel):
     object: str = "model"
     created: int = Field(default_factory=lambda: 1700000000)
     owned_by: str = "qwen3-voice-service"
+
+
+class CustomVoiceResponse(BaseModel):
+    """Custom voice metadata."""
+    id: str
+    name: str
+    filename: str
+    created_at: str

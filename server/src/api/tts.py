@@ -33,6 +33,9 @@ async def synthesize(req: TTSRequest):
             ref_audio_path=req.ref_audio,
             ref_text=req.ref_text,
             instruct=req.instruct,
+            temperature=getattr(req, "temperature", None),
+            top_p=getattr(req, "top_p", None),
+            max_new_tokens=getattr(req, "max_new_tokens", None),
         )
         logger.info(f"TTS success: {len(audio_bytes)} bytes")
     except ModelNotAvailableError as e:
