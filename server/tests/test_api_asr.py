@@ -108,7 +108,7 @@ def test_asr_endpoint_returns_verbose_json():
         assert data["text"] == "hello world"
         assert data["language"] == "en"
         assert data["duration"] == 1.5
-        assert len(data["segments"]) == 2
+        assert len(data["words"]) == 2
 
 
 def test_asr_endpoint_passes_language():

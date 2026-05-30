@@ -7,6 +7,7 @@ import logging
 from .core.config import settings
 from .api.tts import router as tts_router
 from .api.asr import router as asr_router
+from .api.custom_voices import router as custom_voices_router
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -38,6 +39,7 @@ app.add_middleware(
 # Mount API routers
 app.include_router(tts_router, prefix="/v1/audio")
 app.include_router(asr_router, prefix="/v1/audio")
+app.include_router(custom_voices_router, prefix="/v1/custom-voices")
 
 
 @app.get("/v1/models")
