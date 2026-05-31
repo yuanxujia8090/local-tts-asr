@@ -4,6 +4,7 @@
 
 Local-TTS-ASR 是一个基于 Qwen3-TTS/ASR 系列模型的本地语音处理服务，提供 OpenAI 兼容的 TTS（文本转语音）和 ASR（自动语音识别）API，以及一个 React WebUI 用于交互式测试。支持 Apple Silicon (MLX) 和 NVIDIA GPU (PyTorch/CUDA) 两种本地推理后端，也支持远程转发到 Ollama/vLLM。
 
+>  [Qwen3-TTS全家桶开源: 语音设计，克隆与生成！](https://qwen.ai/blog?id=qwen3tts-0115)
 ## 项目结构
 
 ```
